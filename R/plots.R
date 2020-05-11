@@ -412,6 +412,7 @@ create.lab <- function(input) {
 
   c(ebola   = "EBOV",
     sars    = "SARS-CoV",
+    sars_2  = "SARS-CoV-2",
     mers    = "MERS-CoV",
     ifz     = "Influenza A",
     mrsa    = "MRSA",

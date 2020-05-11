@@ -40,6 +40,7 @@ pathogens.param <- function(param = NULL) {
   param <- list(
     ebola   = list(R0 = 1.8 , mut = 3.10e-6 , seql = 18958   , w.mean = 14.4 , w.sd = 8.9,  dist = "gamma" ),
     sars    = list(R0 = 2.7 , mut = 1.14e-5 , seql = 29714   , w.mean = 8.7  , w.sd = 3.6,  dist = "gamma" ),
+    sars_2  = list(R0 = 2.7 , mut = 2.50e-6 , seql = 29714   , w.mean = 5.0  , w.sd = 1.9,  dist = "gamma" ),
     mers    = list(R0 = 1.2 , mut = 0.25e-5 , seql = 30115   , w.mean = 10.7 , w.sd = 6.0,  dist = "gamma" ),
     ifz     = list(R0 = 1.5 , mut = 1.19e-5 , seql = 13155   , w.mean = 3.0  , w.sd = 1.5,  dist = "gamma" ),
     mrsa    = list(R0 = 1.3 , mut = 5.21e-9 , seql = 2842618 , w.mean = 15.6 , w.sd = 10.0, dist = "gamma" ),
