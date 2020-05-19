@@ -1,0 +1,115 @@
+---
+title: "SEIR"
+author: "Josh Herbeck"
+date: "5/16/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load deSolve library
+```{r}
+library(deSolve)
+```
+
+# Function to return derivatives of SEIR model
+```{r}
+# frequency dependent: I <- beta*I*(S/N)
+# density dependent: I <- beta*I*S
+
+seir_ode<-function(t, Y, par){
+  S <- Y[1]   # susceptible
+  E1 <- Y[2]  # exposed with 614D
+  E2 <- Y[3]  # exposed with 614G
+  I1 <- Y[4]  # infected with 614D
+  I2 <- Y[5]  # infectd with 614G
+  R <- Y[6]   # recovered
+  N <- S + E1 + I1 + E2 + I2 + R
+  
+  beta1 <- par[1]   # transmission rate 614D
+  beta2 <- par[2]   # transmission rate 614G
+  sigma <- par[3]   # rate transition from exposed to infected
+  gamma <- par[4]   # recovery rate (rate transmission from infected to recovered)
+  mu <- par[5]      # mu = birth and death rate 
+  
+  dYdt<-vector(length=5)
+  #dS/dt <- 
+  dYdt[1] = mu*N - beta1*S*I1 - (beta1*S*I1)/N - (beta2*S*I2)/N - mu*S  #S
+  dYdt[2] = (beta1*S*I1)/N - mu*E1 - sigma*E1  #E1
+  dYdt[3] = (beta2*S*I2)/N - mu*E2 - sigma*E2  #E2, 614G
+  dYdt[4] = sigma*E1 - gamma*I1 - mu*I1  #I1
+  dYdt[5] = sigma*E2 - gamma*I2 - mu*I2  #I2, 614G
+  dYdt[6] = gamma*I1 + gamma*I2 - mu*R
+  
+  return(list(dYdt))
+}
+```
+
+# Set parameter values
+```{r}
+beta1  <- 0.26  #614D
+beta2  <- 0.31  #614G
+sigma <- 1/5
+gamma <- 1/7
+mu    <- 0.01 #guess
+init  <- c(0.998, 0.0015, 0.0005, 0.0, 0.0, 0.0)
+t     <- seq(0, 250)
+par   <- c(beta1, beta2, sigma, gamma, mu)
+
+# Solve system using lsoda
+sol <- lsoda(init, t, seir_ode, par)
+```
+
+# Plot solution
+```{r Plot all compartments}
+plot(t, sol[,2], type = "l", col = "grey", ylim=c(0, 0.5), ylab = "Proportion")
+lines(t, sol[,3], col = "orange")
+lines(t, sol[,4], col = "blue")
+lines(t, sol[,5], col = "red") 
+lines(t, sol[,6], col = "green") 
+lines(t, 1-rowSums(sol[,2:6]), col="yellow")
+legend(70, 0.5, legend = c("S", "E1", "E2", "I1", "I2", "R"), 
+       col=c("grey","orange","blue","red", "green", "yellow"), 
+       lty=1, cex=0.8)
+```
+
+```{r Plot just D614G prevalence}
+#Just the two allele frequencies
+plot(t, (sol[,3] + sol[,5]), type = "l", col = "blue", ylim=c(0, 0.3), ylab = "Proportion")
+lines(t, (sol[,4] + sol[,6]), col = "red")
+legend(70, 0.3, legend = c("614G", "614D"), 
+       col=c("red", "blue"), 
+       lty=1, cex=0.8)
+```
+
+
+```{r Plot 614G relative frequency}
+prev.614D <- sol[,3] + sol[,5]
+prev.614G <- sol[,4] + sol[,6]
+
+plot(t, prev.614G/(prev.614D + prev.614G), type = "l", col = "blue", ylim=c(0, 1.0), ylab = "614G relative frequency")
+
+
+```
+
+
+Ignoring random drift, the strength of selection  is related to the rate at which the frequency  of the variant changes (Ewens 2004):
+
+dp/dt = p(1-p)s
+p(t) = e^(s*t) / (1 + e^(s*t))
+
+#Estimating the selection coefficient on D614G
+```{r Selection coefficient}
+
+
+
+```
+
+
+
+
+
+
+
