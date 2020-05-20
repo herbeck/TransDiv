@@ -1,7 +1,7 @@
 ---
-title: "SEIR"
+title: "SEIR SARS-CoV-2 D614G selection"
 author: "Josh Herbeck"
-date: "5/16/2020"
+date: "5/20/2020"
 output: html_document
 ---
 
@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(deSolve)
 ```
 
-# Function to return derivatives of SEIR model
+# Set up the epidemic model
 ```{r}
 # frequency dependent: I <- beta*I*(S/N)
 # density dependent: I <- beta*I*S
@@ -47,8 +47,8 @@ seir_ode<-function(t, Y, par){
 }
 ```
 
-# Set parameter values
-```{r}
+# Set the SEIR parameter values
+```{r parameter values}
 beta1  <- 0.26  #614D
 beta2  <- 0.31  #614G
 sigma <- 1/5
@@ -57,14 +57,17 @@ mu    <- 0.01 #guess
 init  <- c(0.998, 0.0015, 0.0005, 0.0, 0.0, 0.0)
 t     <- seq(0, 250)
 par   <- c(beta1, beta2, sigma, gamma, mu)
+```
 
+# Solve 
+```{r solve}
 # Solve system using lsoda
 sol <- lsoda(init, t, seir_ode, par)
 ```
 
-# Plot solution
+# Plot the epidemic
 ```{r Plot all compartments}
-plot(t, sol[,2], type = "l", col = "grey", ylim=c(0, 0.5), ylab = "Proportion")
+plot(t, sol[,2], type = "l", col = "grey", ylim=c(0, 0.25), ylab = "Proportion")
 lines(t, sol[,3], col = "orange")
 lines(t, sol[,4], col = "blue")
 lines(t, sol[,5], col = "red") 
@@ -75,6 +78,7 @@ legend(70, 0.5, legend = c("S", "E1", "E2", "I1", "I2", "R"),
        lty=1, cex=0.8)
 ```
 
+# Plot just D614G prevalence
 ```{r Plot just D614G prevalence}
 #Just the two allele frequencies
 plot(t, (sol[,3] + sol[,5]), type = "l", col = "blue", ylim=c(0, 0.3), ylab = "Proportion")
@@ -84,27 +88,59 @@ legend(70, 0.3, legend = c("614G", "614D"),
        lty=1, cex=0.8)
 ```
 
-
+# Plot just 614G relative allele frequency
 ```{r Plot 614G relative frequency}
 prev.614D <- sol[,3] + sol[,5]
 prev.614G <- sol[,4] + sol[,6]
+freq.614G <- prev.614G/(prev.614D + prev.614G)
 
-plot(t, prev.614G/(prev.614D + prev.614G), type = "l", col = "blue", ylim=c(0, 1.0), ylab = "614G relative frequency")
+plot(t, freq.614G, type = "l", col = "blue", 
+     ylim=c(0, 1.0), 
+     ylab = "614G relative frequency",
+     xlab = "days")
+```
 
+```{r curve fit, eval=FALSE, include=FALSE}
+#fit a curve
+library(mosaic)
 
+f1 <- fitModel(freq.614G ~ a*t^b) 
+#coef(f1)
+plotFun(f1(t)~t, add=TRUE)
+#this curve is not good but fine for now
+#a = 0.1011195
+#b = 0.4116858
+f <- expression(0.101*t^0.412)
+D(f,'t')
 ```
 
 
-Ignoring random drift, the strength of selection  is related to the rate at which the frequency  of the variant changes (Ewens 2004):
-
-dp/dt = p(1-p)s
-p(t) = e^(s*t) / (1 + e^(s*t))
-
 #Estimating the selection coefficient on D614G
+Let's set the fitness of 614D = 1 and 614G = 1 + s.
+This gives negative s values when looking at changes in 614G frequencies over time;
+if we want positive s values we can just take the absolute value.
 ```{r Selection coefficient}
+#p' = (1 + s)p
+#s = 1 - (p'/p)
 
+#I need to estimate p'/p for every 7 day span 
+#p' = p + 7 days, ~7 days = 1 viral generation
+#lag.p <- freq.614G[8]/freq.614G[1]
+#s <- 1 - lag.p
 
+end_value <- length(freq.614G)-7
+s.out <- sapply(1:end_value, function(x) 1 - (freq.614G[x+7] / freq.614G[x]) )
 
+hist(abs(s.out), breaks=100, xlim=c(0,0.12),
+     xlab="selection coefficient of 614D",
+     main = "D614G selection coefficient distribution")
+
+s.out <- c(NA, NA, NA, s.out, NA, NA, NA, NA)
+df <- data.frame(t, s.out)
+
+plot(t, abs(s.out), col = "red", pch = 20,
+     xlab = "days",
+     ylab = "D614G selection coefficient")
 ```
 
 
