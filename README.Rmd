@@ -1,0 +1,13 @@
+---
+title: "Relapse.Reinfection"
+author: "Josh Herbeck"
+date: "5/23/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Pr( diversity | relapse, time ) and Pr( diversity | reinfection, time ) and Pr( relapse | time ) and Pr( reinfection | time ).  If you can specify those the rest goes through easily. I think we were going to say you can estimate the first as you said (phylogenetics, or poisson -- but note here the tree is likely fitting within host (unlike HIV) so poisson models might fail to account for the correlations and you might need to consider branching models or showing it doesn't matter; maybe it doesn't), the second maybe can be estimated from that tree you showed me, as we discussed, something along the lines of estimating the distance between a random pair -- but be careful there as it. fails to account for the correlation structure in networks, which is shown on your tree as a whole lot of different people with almost no diversity across them.. but random pair is a fine start; you could just characterize the distribution for reinfection that way for now). Then the latter bits, the "base rates" might have to be just set for "scenario analysis" for now, eg use the sliders.  Like consider Pr( relapse | time ) over a range and see what you get.  Pr( reinfection | time ) could be estimated, again if you ignore all the person-specific covariation, networks, etc, from just population level data.  All of these could start with starting points that do not account for the correlation structure nuances I bring up, and you could even just start with four sliders one for each of those inputs. The output is Pr( this is a relapse, not a reinfection ) - I can help you get a starting model going with eg a fn like this:
+calculate.posterior.probability.of.relapse <- function ( diversity, time, SliderValues ) {...}
